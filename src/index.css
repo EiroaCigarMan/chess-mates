@@ -1,0 +1,38 @@
+:root {
+  /* Cedar wood (pieces, frame) */
+  --cedar-light: #e8c9a0;
+  --cedar-dark: #7a3b22;
+  /* Marble (board) */
+  --marble-light: #f2efea;
+  --marble-dark: #3f6b5a;
+
+  --bg: #ece8e1;
+  --card: #f8f6f2;
+  --text: #2b2420;
+  --muted: #6b5f57;
+
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background-color: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cedar-dark: #e0a37a;
+    --bg: #1d1916;
+    --card: #2a2420;
+    --text: #efe7df;
+    --muted: #b3a69b;
+  }
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
