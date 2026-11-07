@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PuzzleBoard } from '../board/PuzzleBoard'
 import { PromotionPicker } from '../board/PromotionPicker'
 import { type Level, levelFile } from '../lib/levels'
+import { type Result, pickPuzzle, recordResult } from '../lib/progress'
+import { getProgress, updateProgress, useProgress } from '../lib/progressStore'
 import type { LevelFile, Puzzle } from '../lib/puzzle'
 import {
   type SolveState,
@@ -10,13 +12,13 @@ import {
   isPromotion,
   playReply,
   playSetup,
+  resultOf,
   retry,
   revealStep,
   showSolution,
   startPuzzle,
   takeHint,
 } from '../lib/solver'
-import { loadNumber, saveNumber } from '../lib/storage'
 import './puzzle.css'
 
 /** Pauses so the player can follow what the opponent does. */
@@ -32,7 +34,9 @@ interface Props {
 export function PuzzleScreen({ level, onBack }: Props) {
   const [puzzles, setPuzzles] = useState<Puzzle[] | null>(null)
   const [error, setError] = useState(false)
-  const [index, setIndex] = useState(() => loadNumber(`level-${level.id}:next`, 0))
+  // Which puzzle is on the board. `visit` changes every time, so even a
+  // repeated puzzle gets a fresh player.
+  const [current, setCurrent] = useState<{ index: number; review: boolean; visit: number } | null>(null)
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}${levelFile(level.id)}`)
@@ -40,7 +44,11 @@ export function PuzzleScreen({ level, onBack }: Props) {
         if (!r.ok) throw new Error(String(r.status))
         return r.json() as Promise<LevelFile>
       })
-      .then((file) => setPuzzles(file.puzzles))
+      .then((file) => {
+        setPuzzles(file.puzzles)
+        const ids = file.puzzles.map((p) => p.id)
+        setCurrent({ ...pickPuzzle(getProgress(), level.id, ids), visit: 0 })
+      })
       .catch(() => setError(true))
   }, [level.id])
 
@@ -52,26 +60,45 @@ export function PuzzleScreen({ level, onBack }: Props) {
       </main>
     )
   }
-  if (!puzzles) return <main className="puzzle-screen loading">Setting up the board…</main>
+  if (!puzzles || !current) return <main className="puzzle-screen loading">Setting up the board…</main>
 
-  const safeIndex = index % puzzles.length
-  const nextIndex = (safeIndex + 1) % puzzles.length
-  // Solving saves progress at once, so a reload doesn't bring a solved puzzle back.
-  const solved = () => saveNumber(`level-${level.id}:next`, nextIndex)
-  const next = () => {
-    setIndex(nextIndex)
-    saveNumber(`level-${level.id}:next`, nextIndex)
+  const puzzle = puzzles[current.index]
+
+  /** Scores this visit once; returns the rating change. */
+  const record = (result: Result, ms: number): number => {
+    let delta = 0
+    updateProgress((p) => {
+      const r = recordResult(p, {
+        levelId: level.id,
+        puzzleId: puzzle.id,
+        puzzleRating: puzzle.rating,
+        result,
+        ms,
+        now: new Date(),
+        index: current.review ? null : current.index,
+        total: puzzles.length,
+      })
+      delta = r.delta
+      return r.progress
+    })
+    return delta
   }
+
+  const next = () =>
+    setCurrent((c) => ({
+      ...pickPuzzle(getProgress(), level.id, puzzles.map((p) => p.id)),
+      visit: (c?.visit ?? 0) + 1,
+    }))
 
   return (
     <PuzzlePlayer
-      // A new key gives each puzzle a fresh player with fresh state.
-      key={puzzles[safeIndex].id}
+      key={current.visit}
       level={level}
-      puzzle={puzzles[safeIndex]}
-      number={safeIndex + 1}
+      puzzle={puzzle}
+      number={current.index + 1}
       total={puzzles.length}
-      onSolved={solved}
+      review={current.review}
+      onResult={record}
       onNext={next}
       onBack={onBack}
     />
@@ -83,15 +110,52 @@ interface PlayerProps {
   puzzle: Puzzle
   number: number
   total: number
-  onSolved: () => void
+  review: boolean
+  onResult: (result: Result, ms: number) => number
   onNext: () => void
   onBack: () => void
 }
 
-function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }: PlayerProps) {
+function PuzzlePlayer({ level, puzzle, number, total, review, onResult, onNext, onBack }: PlayerProps) {
   const [state, setState] = useState<SolveState>(() => startPuzzle(puzzle))
   const [promotion, setPromotion] = useState<{ from: string; to: string } | null>(null)
   const [nudge, setNudge] = useState(0) // bumps to re-run the "wrong" shake animation
+  const [delta, setDelta] = useState<number | null>(null)
+  const { rating } = useProgress()
+
+  // Scoring: each visit counts once, at the first moment it can be scored.
+  const recorded = useRef(false)
+  const startedAt = useRef<number | null>(null)
+  const latest = useRef({ state, onResult })
+  useEffect(() => {
+    latest.current = { state, onResult }
+    if (state.status === 'playing' && startedAt.current === null) startedAt.current = Date.now()
+    const result = resultOf(state)
+    if (result && !recorded.current) {
+      recorded.current = true
+      setDelta(onResult(result, Date.now() - (startedAt.current ?? Date.now())))
+    }
+  }, [state, onResult])
+  // Leaving after a wrong move counts as a miss. It must be recorded BEFORE
+  // the next puzzle is picked, so Next and Back call this first; the unmount
+  // cleanup is only a safety net.
+  const recordLeaving = () => {
+    const { state: s, onResult: report } = latest.current
+    const result = resultOf(s, true)
+    if (result && !recorded.current) {
+      recorded.current = true
+      report(result, Date.now() - (startedAt.current ?? Date.now()))
+    }
+  }
+  const recordLeavingRef = useRef(recordLeaving)
+  useEffect(() => {
+    recordLeavingRef.current = recordLeaving
+  })
+  useEffect(() => () => recordLeavingRef.current(), [])
+  const leave = (go: () => void) => () => {
+    recordLeaving()
+    go()
+  }
 
   // The opponent moves on its own: first the setup move, then each forced reply.
   useEffect(() => {
@@ -114,7 +178,6 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
     const result = attempt(state, uci)
     if (result.outcome === 'illegal') return false
     if (result.outcome === 'wrong') setNudge((n) => n + 1)
-    if (result.outcome === 'solved') onSolved()
     setState(result.state)
     return true
   }
@@ -151,7 +214,7 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
   return (
     <main className="puzzle-screen">
       <header className="puzzle-header">
-        <button type="button" className="back" onClick={onBack} aria-label="Back to levels">
+        <button type="button" className="back" onClick={leave(onBack)} aria-label="Back to levels">
           ←
         </button>
         <div>
@@ -159,7 +222,8 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
             {level.name} · Mate in {level.mateIn}
           </h2>
           <p className="puzzle-meta">
-            Puzzle {number} of {total} · rated {puzzle.rating}
+            {review ? <span className="review-tag">Review</span> : `Puzzle ${number} of ${total}`} · rated{' '}
+            {puzzle.rating}
           </p>
         </div>
       </header>
@@ -175,6 +239,12 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
 
       <p key={nudge} className={`status ${message.tone}`} role="status" aria-live="polite">
         {message.text}
+      </p>
+      <p className="rating-line">
+        Your rating <strong>{rating}</strong>
+        {delta !== null && delta !== 0 && (
+          <span className={delta > 0 ? 'delta up' : 'delta down'}>{delta > 0 ? `+${delta}` : `−${-delta}`}</span>
+        )}
       </p>
 
       <div className="actions">
@@ -204,7 +274,7 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
           </button>
         )}
         {(state.status === 'solved' || state.status === 'failed' || state.status === 'revealed') && (
-          <button type="button" className="primary" onClick={onNext}>
+          <button type="button" className="primary" onClick={leave(onNext)}>
             Next puzzle →
           </button>
         )}

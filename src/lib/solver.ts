@@ -28,8 +28,10 @@ export interface SolveState {
   player: 'white' | 'black';
   /** Hints shown for the current move: 0 none, 1 which piece, 2 piece and target. */
   hintLevel: 0 | 1 | 2;
-  /** True once a hint or the solution was used (progress tracking will count these differently). */
+  /** True once a hint or the solution was used. */
   assisted: boolean;
+  /** Wrong moves made so far. */
+  mistakes: number;
 }
 
 export type Outcome = 'illegal' | 'wrong' | 'correct' | 'solved';
@@ -47,6 +49,7 @@ export function startPuzzle(puzzle: Puzzle): SolveState {
     player: setupSide === 'w' ? 'black' : 'white',
     hintLevel: 0,
     assisted: false,
+    mistakes: 0,
   };
 }
 
@@ -95,7 +98,7 @@ export function attempt(state: SolveState, uci: string): { outcome: Outcome; sta
   if (!isLast && uci === moves[state.ply]) {
     return { outcome: 'correct', state: { ...after, ply: state.ply + 1, status: 'opponent' } };
   }
-  return { outcome: 'wrong', state: { ...after, status: 'failed', retryFen: state.fen } };
+  return { outcome: 'wrong', state: { ...after, status: 'failed', retryFen: state.fen, mistakes: state.mistakes + 1 } };
 }
 
 /** After a wrong move: go back to the position before it and try again. */
@@ -140,6 +143,18 @@ export function revealStep(state: SolveState): SolveState {
   if (state.status !== 'revealing') return state;
   const next = applyMove(state, state.puzzle.moves[state.ply]);
   return { ...next, status: next.ply === state.puzzle.moves.length ? 'revealed' : 'revealing' };
+}
+
+/**
+ * How this visit counts for progress, or null if it can't be scored yet:
+ * clean = solved with no help; assisted = solved after a hint or a wrong move;
+ * failed = solution shown, or (when leaving) at least one wrong move.
+ */
+export function resultOf(state: SolveState, leaving = false): 'clean' | 'assisted' | 'failed' | null {
+  if (state.status === 'solved') return state.assisted || state.mistakes > 0 ? 'assisted' : 'clean';
+  if (state.status === 'revealing' || state.status === 'revealed') return 'failed';
+  if (leaving && state.mistakes > 0) return 'failed';
+  return null;
 }
 
 /** True if moving from -> to is a legal pawn promotion (so we must ask which piece). */

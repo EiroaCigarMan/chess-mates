@@ -37,6 +37,46 @@
   line-height: 1;
 }
 
+.review-tag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--cedar-light);
+  color: #4a2412;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.rating-line {
+  margin: -6px 0 12px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.delta {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.delta.up {
+  background: rgba(47, 122, 79, 0.15);
+  color: #2f7a4f;
+}
+
+.delta.down {
+  background: rgba(178, 58, 42, 0.12);
+  color: #b23a2a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .delta.up { color: #7fd3a0; }
+  .delta.down { color: #ff8f7f; }
+}
+
 .status {
   margin: 16px 0 12px;
   text-align: center;

@@ -27,6 +27,8 @@ h1 {
 
 .level-card {
   width: 100%;
+  height: 100%;
+  box-sizing: border-box; /* the locked card is a div, not a button: keep padding inside the width */
   font: inherit;
   color: inherit;
   cursor: pointer;
@@ -58,6 +60,62 @@ h1 {
 .level-card:hover,
 .level-card:focus-visible {
   border-color: var(--cedar-dark);
+}
+
+.level-card.locked {
+  cursor: default;
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.level-card.locked:hover {
+  border-color: var(--cedar-light);
+}
+
+.level-card.locked .level-count {
+  text-wrap: balance;
+}
+
+/* Rating summary on the home screen; opens the stats page */
+.rating-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 14px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 2px solid var(--cedar-light);
+  background: var(--card);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rating-card:hover,
+.rating-card:focus-visible {
+  border-color: var(--cedar-dark);
+}
+
+.rating-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.rating-value {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--cedar-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-extra {
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .credits {
