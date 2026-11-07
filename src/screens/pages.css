@@ -1,0 +1,176 @@
+/* Shared layout for the Settings and Credits pages */
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.page h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.page .panel {
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 2px solid var(--cedar-light);
+}
+
+.page .panel p {
+  margin: 0 0 10px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.center {
+  text-align: center;
+}
+
+.page a {
+  color: var(--cedar-dark);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.setting-row p {
+  margin-bottom: 0 !important;
+}
+
+.switch {
+  flex: none;
+  min-width: 64px;
+  font-weight: 600;
+}
+
+.switch[aria-checked='true'] {
+  background: var(--cedar-dark);
+  border-color: var(--cedar-dark);
+  color: #fff8f0;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+button.danger {
+  border-color: #d9a39b;
+  color: #b23a2a;
+}
+
+button.danger:hover {
+  border-color: #b23a2a;
+}
+
+.notice {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.notice.good {
+  background: rgba(47, 122, 79, 0.12);
+  color: #2f7a4f;
+}
+
+.notice.bad {
+  background: rgba(178, 58, 42, 0.12);
+  color: #b23a2a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .notice.good { color: #7fd3a0; }
+  .notice.bad { color: #ff8f7f; }
+  button.danger { color: #ff8f7f; }
+}
+
+/* Credits */
+.credits-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 6px 0 18px;
+  padding: 18px 16px 16px;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 170, 90, 0.18), transparent 60%),
+    linear-gradient(180deg, #2b1a12, #170e09);
+}
+
+.credits-hero .smoking-knight {
+  width: min(50vw, 200px);
+}
+
+.credits-hero .muted {
+  color: #bfa892;
+  margin: 0;
+}
+
+.credits-title {
+  margin: 8px 0 2px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.8rem;
+  color: #e9c79b;
+}
+
+.people,
+.thanks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.people li {
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
+}
+
+.people li:last-child {
+  border-bottom: none;
+}
+
+.person-name {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cedar-dark);
+}
+
+.person-role {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.thanks li {
+  padding: 5px 0;
+  font-size: 0.9rem;
+}

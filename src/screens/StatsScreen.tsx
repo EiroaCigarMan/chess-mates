@@ -10,7 +10,7 @@ import {
   isUnlocked,
   unlockNeeds,
 } from '../lib/progress'
-import { updateProgress, useProgress } from '../lib/progressStore'
+import { useProgress } from '../lib/progressStore'
 import './stats.css'
 
 const RESULT_LABEL: Record<Result, { icon: string; text: string }> = {
@@ -115,11 +115,8 @@ export function StatsScreen({ onBack }: { onBack: () => void }) {
         <h3>Levels unlock as you improve</h3>
         <p className="muted small">
           Each level opens after 10 clean solves (no hints, no wrong moves) on the level below, with at least 7 of
-          your last 10 clean. Want to look ahead anyway?
+          your last 10 clean. To look ahead anyway, turn on <strong>Unlock all levels</strong> in Settings.
         </p>
-        <button type="button" onClick={() => updateProgress((q) => ({ ...q, unlockAll: !q.unlockAll }))}>
-          {p.unlockAll ? 'Lock levels again' : 'Unlock all levels'}
-        </button>
       </section>
     </main>
   )

@@ -118,12 +118,26 @@ h1 {
   color: var(--muted);
 }
 
-.credits {
-  margin-top: 28px;
-  font-size: 0.8rem;
-  color: var(--muted);
+.home-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
 }
 
-.credits a {
-  color: inherit;
+.home-nav button {
+  font: inherit;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 2px solid var(--cedar-light);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-nav button:hover,
+.home-nav button:focus-visible {
+  border-color: var(--cedar-dark);
 }

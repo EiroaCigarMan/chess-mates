@@ -249,3 +249,32 @@ export function currentDailyStreak(p: Progress, now: Date): number {
   const yesterday = localDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
   return lastDay === localDay(now) || lastDay === yesterday ? count : 0;
 }
+
+/**
+ * Reads a progress file the player saved earlier (Settings → Save progress).
+ * Returns null if it isn't one of ours, so a wrong file can't break the app.
+ */
+export function parseProgress(data: unknown): Progress | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as Partial<Progress> & { app?: string };
+  const p = d.app === 'chess-mates' && 'progress' in d ? (d as { progress: Partial<Progress> }).progress : d;
+  if (!p || p.version !== 1 || typeof p.rating !== 'number' || !p.levels || typeof p.levels !== 'object') {
+    return null;
+  }
+  if (!Array.isArray(p.history) || !Array.isArray(p.review)) return null;
+  const base = newProgress();
+  const levels = { ...base.levels };
+  for (const l of LEVELS) {
+    const saved = (p.levels as Record<number, Partial<LevelStats>>)[l.id];
+    if (saved && typeof saved === 'object') levels[l.id] = { ...base.levels[l.id], ...saved };
+  }
+  return { ...base, ...p, levels } as Progress;
+}
+
+/** What Settings → Save progress writes: progress plus a little context. */
+export function exportFile(p: Progress, now: Date): { name: string; json: string } {
+  return {
+    name: `chess-mates-progress-${localDay(now)}.json`,
+    json: JSON.stringify({ app: 'chess-mates', savedAt: now.toISOString(), progress: p }, null, 2),
+  };
+}

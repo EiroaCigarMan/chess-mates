@@ -4,6 +4,7 @@ import { PromotionPicker } from '../board/PromotionPicker'
 import { type Level, levelFile } from '../lib/levels'
 import { type Result, pickPuzzle, recordResult } from '../lib/progress'
 import { getProgress, updateProgress, useProgress } from '../lib/progressStore'
+import { play, soundFor } from '../lib/sound'
 import type { LevelFile, Puzzle } from '../lib/puzzle'
 import {
   type SolveState,
@@ -127,6 +128,15 @@ function PuzzlePlayer({ level, puzzle, number, total, review, onResult, onNext, 
   const recorded = useRef(false)
   const startedAt = useRef<number | null>(null)
   const latest = useRef({ state, onResult })
+
+  // Sound for every position change: clack, capture, mate chime, or wrong.
+  const prevFen = useRef(state.fen)
+  useEffect(() => {
+    const sound = soundFor(prevFen.current, state.fen, state.status)
+    prevFen.current = state.fen
+    if (sound) play(sound)
+  }, [state.fen, state.status])
+
   useEffect(() => {
     latest.current = { state, onResult }
     if (state.status === 'playing' && startedAt.current === null) startedAt.current = Date.now()
