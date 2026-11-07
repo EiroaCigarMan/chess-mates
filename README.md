@@ -26,6 +26,10 @@ Stuck? **Hint** makes the piece to move glow, a second hint adds an arrow, and *
 
 The rules live in `src/lib/progress.ts`.
 
+**Settings** turns sound on or off (wooden clacks and a mate chime, synthesized with Web Audio, so there are no audio files). It also saves progress to a file and loads it back, which is the way to back up or move to another device. It can reset everything, or unlock all levels.
+
+**On a phone,** use *Add to Home Screen* to get the cigar-knight icon and a full-screen app.
+
 Each level ships ~300 puzzles from the [Lichess puzzle database](https://database.lichess.org/#puzzles) (CC0), spread from easiest to hardest by Lichess rating.
 
 ## Develop
@@ -56,10 +60,14 @@ The script (`scripts/build-puzzles.ts`) streams and decompresses the file, keeps
 - **Frame:** cedar.
 - **Opening screen:** a cedar knight with a cigar (`src/screens/Splash.tsx`).
 
-The marble and cedar textures in `public/textures/` are generated with SVG noise filters and committed. To regenerate them (needs Playwright with Chromium):
+The marble and cedar textures in `public/textures/` are generated with SVG noise filters and committed. The home-screen icons are rendered from `public/icon.svg`. To regenerate either (needs Playwright with Chromium):
 
 ```bash
 node scripts/make-textures.cjs
+```
+
+```bash
+node scripts/make-icons.cjs
 ```
 
 ## Deploy
@@ -68,6 +76,8 @@ Every push to `main` is built and published to GitHub Pages by `.github/workflow
 One-time setup: **Settings → Pages → Source: GitHub Actions**.
 
 ## Credits
+
+- Made by **Johann ([EiroaCigarMan](https://github.com/EiroaCigarMan))**, creator, and **Ulysses**, co-designer and builder.
 
 - Puzzles: [Lichess](https://lichess.org) puzzle database, released under CC0.
 - Piece shapes: Colin M.L. Burnett ("cburnett" set), via [react-chessboard](https://github.com/Clariity/react-chessboard).

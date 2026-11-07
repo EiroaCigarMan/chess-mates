@@ -3,7 +3,10 @@ import { CedarDefs } from './board/CedarDefs'
 import { type Level, LEVELS } from './lib/levels'
 import { accuracy, currentDailyStreak, isUnlocked, unlockNeeds } from './lib/progress'
 import { useProgress } from './lib/progressStore'
+import { primeAudio } from './lib/sound'
+import { CreditsScreen } from './screens/CreditsScreen'
 import { PuzzleScreen } from './screens/PuzzleScreen'
+import { SettingsScreen } from './screens/SettingsScreen'
 import { Splash } from './screens/Splash'
 import { StatsScreen } from './screens/StatsScreen'
 import './App.css'
@@ -13,7 +16,12 @@ interface LevelSummary {
   shipped: number
 }
 
-type Screen = { name: 'home' } | { name: 'puzzle'; level: Level } | { name: 'stats' }
+type Screen =
+  | { name: 'home' }
+  | { name: 'puzzle'; level: Level }
+  | { name: 'stats' }
+  | { name: 'settings' }
+  | { name: 'credits' }
 
 function App() {
   const [counts, setCounts] = useState<Record<number, number> | null>(null)
@@ -30,8 +38,20 @@ function App() {
       .catch(() => setCounts({}))
   }, [])
 
+  // Phones only allow sound after a tap: unlock audio on any tap.
+  useEffect(() => {
+    window.addEventListener('pointerdown', primeAudio, { passive: true })
+    return () => window.removeEventListener('pointerdown', primeAudio)
+  }, [])
+
   const hideSplash = useCallback(() => setShowSplash(false), [])
   const home = () => setScreen({ name: 'home' })
+  // Each screen starts at the top, not wherever the last one was scrolled.
+  // Braces matter: newer browsers return a Promise from scrollTo, and an effect
+  // must return nothing or a cleanup function.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [screen])
 
   return (
     <>
@@ -39,11 +59,15 @@ function App() {
       {showSplash && <Splash ready={counts !== null} onDone={hideSplash} />}
       {screen.name === 'puzzle' && <PuzzleScreen level={screen.level} onBack={home} />}
       {screen.name === 'stats' && <StatsScreen onBack={home} />}
+      {screen.name === 'settings' && <SettingsScreen onBack={home} />}
+      {screen.name === 'credits' && <CreditsScreen onBack={home} />}
       {screen.name === 'home' && (
         <Home
           counts={counts ?? {}}
           onPick={(level) => setScreen({ name: 'puzzle', level })}
           onStats={() => setScreen({ name: 'stats' })}
+          onSettings={() => setScreen({ name: 'settings' })}
+          onCredits={() => setScreen({ name: 'credits' })}
         />
       )}
     </>
@@ -54,9 +78,11 @@ interface HomeProps {
   counts: Record<number, number>
   onPick: (level: Level) => void
   onStats: () => void
+  onSettings: () => void
+  onCredits: () => void
 }
 
-function Home({ counts, onPick, onStats }: HomeProps) {
+function Home({ counts, onPick, onStats, onSettings, onCredits }: HomeProps) {
   const progress = useProgress()
   const days = currentDailyStreak(progress, new Date())
 
@@ -117,10 +143,17 @@ function Home({ counts, onPick, onStats }: HomeProps) {
           )
         })}
       </ol>
-      <p className="credits">
-        Puzzles from the <a href="https://database.lichess.org/#puzzles">Lichess puzzle database</a> (CC0). Piece
-        shapes by Colin M.L. Burnett.
-      </p>
+      <nav className="home-nav" aria-label="More">
+        <button type="button" onClick={onStats}>
+          Stats
+        </button>
+        <button type="button" onClick={onSettings}>
+          Settings
+        </button>
+        <button type="button" onClick={onCredits}>
+          Credits
+        </button>
+      </nav>
     </main>
   )
 }

@@ -5,9 +5,11 @@ import {
   type Result,
   START_RATING,
   currentDailyStreak,
+  exportFile,
   isUnlocked,
   migrateFromNextIndexes,
   newProgress,
+  parseProgress,
   pickPuzzle,
   ratingChange,
   recordResult,
@@ -166,5 +168,35 @@ describe('migration', () => {
   it('a brand-new player starts with only Easy', () => {
     const p = migrateFromNextIndexes({ 1: 0, 2: 0 });
     expect(isUnlocked(p, 2)).toBe(false);
+  });
+});
+
+describe('save and load progress', () => {
+  it('round-trips through the saved file', () => {
+    let p = newProgress();
+    for (let i = 0; i < 3; i++) p = play(p, 'clean');
+    const file = exportFile(p, DAY1);
+    expect(file.name).toBe('chess-mates-progress-2026-11-07.json');
+    expect(parseProgress(JSON.parse(file.json))).toEqual(p);
+  });
+
+  it('also accepts the bare progress object', () => {
+    const p = play(newProgress(), 'failed');
+    expect(parseProgress(JSON.parse(JSON.stringify(p)))).toEqual(p);
+  });
+
+  it('rejects files that are not chess-mates progress', () => {
+    expect(parseProgress(null)).toBeNull();
+    expect(parseProgress('hello')).toBeNull();
+    expect(parseProgress({ version: 2, rating: 900, levels: {} })).toBeNull();
+    expect(parseProgress({ app: 'chess-mates', progress: { version: 1 } })).toBeNull();
+    expect(parseProgress({ name: 'my shopping list' })).toBeNull();
+  });
+
+  it('fills in levels missing from an older or partial save', () => {
+    const partial = { ...newProgress(), levels: { 1: newProgress().levels[1] } };
+    const p = parseProgress(JSON.parse(JSON.stringify(partial)));
+    expect(Object.keys(p!.levels)).toHaveLength(6);
+    expect(p!.levels[6]).toMatchObject({ attempts: 0, unlocked: false });
   });
 });

@@ -48,7 +48,7 @@ export function Splash({ ready, onDone }: Props) {
  * The knight is the classic cburnett knight shape; the cigar, ember and
  * smoke are drawn on top in the same 45x45 coordinate space.
  */
-function SmokingKnight() {
+export function SmokingKnight() {
   return (
     <svg className="smoking-knight" viewBox="-14 -4 58 47" role="img" aria-label="A wooden chess knight smoking a cigar">
       <defs>

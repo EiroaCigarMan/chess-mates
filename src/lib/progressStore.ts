@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { LEVELS } from './levels';
-import { type Progress, migrateFromNextIndexes, newProgress } from './progress';
+import { type Progress, migrateFromNextIndexes, parseProgress } from './progress';
 import { loadNumber } from './storage';
 
 /**
@@ -16,8 +16,9 @@ function load(): Progress {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as Progress;
-      if (parsed?.version === 1) return { ...newProgress(), ...parsed };
+      // Same checks as loading a saved file: fills in anything missing.
+      const parsed = parseProgress(JSON.parse(raw));
+      if (parsed) return parsed;
     }
   } catch {
     // unreadable or blocked storage: start fresh below
@@ -38,6 +39,11 @@ export function updateProgress(change: (p: Progress) => Progress): void {
     // not saved; still works for this visit
   }
   listeners.forEach((l) => l());
+}
+
+/** Replace everything (loading a saved file, or starting over). */
+export function replaceProgress(next: Progress): void {
+  updateProgress(() => next);
 }
 
 function subscribe(listener: () => void): () => void {
