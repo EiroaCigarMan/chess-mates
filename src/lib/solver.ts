@@ -9,8 +9,11 @@ import { type Puzzle, parseUci } from './puzzle';
  *                           │
  *                           ├─attempt(final mate)──▶ solved
  *                           └─attempt(wrong)───────▶ failed ──retry──▶ playing
+ *
+ *   Any unfinished state ──showSolution──▶ revealing ──revealStep…──▶ revealed
+ *   Hints (takeHint) don't change the status; they only raise hintLevel.
  */
-export type Status = 'intro' | 'playing' | 'opponent' | 'solved' | 'failed';
+export type Status = 'intro' | 'playing' | 'opponent' | 'solved' | 'failed' | 'revealing' | 'revealed';
 
 export interface SolveState {
   puzzle: Puzzle;
@@ -23,6 +26,10 @@ export interface SolveState {
   lastMove: { from: string; to: string } | null;
   /** The player's colour, known once the setup move is played. */
   player: 'white' | 'black';
+  /** Hints shown for the current move: 0 none, 1 which piece, 2 piece and target. */
+  hintLevel: 0 | 1 | 2;
+  /** True once a hint or the solution was used (progress tracking will count these differently). */
+  assisted: boolean;
 }
 
 export type Outcome = 'illegal' | 'wrong' | 'correct' | 'solved';
@@ -38,6 +45,8 @@ export function startPuzzle(puzzle: Puzzle): SolveState {
     retryFen: null,
     lastMove: null,
     player: setupSide === 'w' ? 'black' : 'white',
+    hintLevel: 0,
+    assisted: false,
   };
 }
 
@@ -73,7 +82,12 @@ export function attempt(state: SolveState, uci: string): { outcome: Outcome; sta
 
   const { moves } = state.puzzle;
   const isLast = state.ply === moves.length - 1;
-  const after = { ...state, fen: chess.fen(), lastMove: { from: uci.slice(0, 2), to: uci.slice(2, 4) } };
+  const after: SolveState = {
+    ...state,
+    fen: chess.fen(),
+    lastMove: { from: uci.slice(0, 2), to: uci.slice(2, 4) },
+    hintLevel: 0, // hints are per move
+  };
 
   if (isLast && chess.isCheckmate()) {
     return { outcome: 'solved', state: { ...after, ply: state.ply + 1, status: 'solved' } };
@@ -88,6 +102,44 @@ export function attempt(state: SolveState, uci: string): { outcome: Outcome; sta
 export function retry(state: SolveState): SolveState {
   if (state.status !== 'failed' || !state.retryFen) return state;
   return { ...state, status: 'playing', fen: state.retryFen, retryFen: null, lastMove: null };
+}
+
+/** The move a hint points at: the solution's next move, while it's the player's turn. */
+export function hintMove(state: SolveState): { from: string; to: string } | null {
+  if (state.status !== 'playing') return null;
+  const uci = state.puzzle.moves[state.ply];
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+}
+
+/** First hint shows which piece to move; the second also shows where. */
+export function takeHint(state: SolveState): SolveState {
+  if (state.status !== 'playing' || state.hintLevel === 2) return state;
+  return { ...state, hintLevel: (state.hintLevel + 1) as 1 | 2, assisted: true };
+}
+
+/**
+ * Gives up and shows the answer: from the current position (or, after a
+ * wrong move, the position before it), the remaining solution moves are
+ * played one at a time with revealStep.
+ */
+export function showSolution(state: SolveState): SolveState {
+  if (state.status === 'solved' || state.status === 'revealing' || state.status === 'revealed') return state;
+  return {
+    ...state,
+    status: 'revealing',
+    fen: state.retryFen ?? state.fen,
+    lastMove: state.retryFen ? null : state.lastMove,
+    retryFen: null,
+    hintLevel: 0,
+    assisted: true,
+  };
+}
+
+/** Plays the next solution move while revealing; ends in 'revealed' after the mate. */
+export function revealStep(state: SolveState): SolveState {
+  if (state.status !== 'revealing') return state;
+  const next = applyMove(state, state.puzzle.moves[state.ply]);
+  return { ...next, status: next.ply === state.puzzle.moves.length ? 'revealed' : 'revealing' };
 }
 
 /** True if moving from -> to is a legal pawn promotion (so we must ask which piece). */

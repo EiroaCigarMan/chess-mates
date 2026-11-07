@@ -54,12 +54,19 @@
   animation: shake 0.35s;
 }
 
+.status.hint {
+  color: #a8601c;
+}
+
 @media (prefers-color-scheme: dark) {
   .status.good {
     color: #7fd3a0;
   }
   .status.bad {
     color: #ff8f7f;
+  }
+  .status.hint {
+    color: #f0b46a;
   }
 }
 
@@ -76,6 +83,7 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
   min-height: 44px;
@@ -89,10 +97,16 @@ button {
   background: var(--card);
   color: var(--text);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent; /* no grey/blue flash on phones */
 }
 
 button:hover {
   border-color: var(--cedar-dark);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 button.primary {
