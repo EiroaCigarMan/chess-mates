@@ -1,0 +1,46 @@
+{
+  "levels": [
+    {
+      "levelId": 1,
+      "name": "Easy",
+      "mateIn": 1,
+      "candidates": 259932,
+      "shipped": 300
+    },
+    {
+      "levelId": 2,
+      "name": "Medium",
+      "mateIn": 2,
+      "candidates": 343083,
+      "shipped": 300
+    },
+    {
+      "levelId": 3,
+      "name": "Hard",
+      "mateIn": 3,
+      "candidates": 110173,
+      "shipped": 300
+    },
+    {
+      "levelId": 4,
+      "name": "Expert",
+      "mateIn": 4,
+      "candidates": 20055,
+      "shipped": 300
+    },
+    {
+      "levelId": 5,
+      "name": "Master",
+      "mateIn": 5,
+      "candidates": 3825,
+      "shipped": 300
+    },
+    {
+      "levelId": 6,
+      "name": "Grandmaster",
+      "mateIn": 6,
+      "candidates": 1001,
+      "shipped": 300
+    }
+  ]
+}

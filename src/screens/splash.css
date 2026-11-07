@@ -1,0 +1,84 @@
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 170, 90, 0.18), transparent 60%),
+    linear-gradient(180deg, #2b1a12, #170e09);
+  color: #f3e6d6;
+  cursor: pointer;
+  transition-property: opacity;
+  transition-timing-function: ease;
+}
+
+.splash.leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.smoking-knight {
+  width: min(70vw, 300px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
+}
+
+.splash-title {
+  margin: 12px 0 4px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 8vw, 3rem);
+  letter-spacing: 0.02em;
+  color: #e9c79b;
+}
+
+.splash-sub {
+  margin: 0;
+  color: #bfa892;
+  font-size: 0.95rem;
+}
+
+/* Ember breathes in and out */
+.ember {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ember 1.6s ease-in-out infinite;
+}
+
+@keyframes ember {
+  0%, 100% { opacity: 0.75; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Smoke wisps drift up, stretch and fade, staggered */
+.wisp {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  opacity: 0;
+  animation: wisp 3s ease-out infinite;
+}
+
+.w2 { animation-delay: 1s; }
+.w3 { animation-delay: 2s; }
+
+@keyframes wisp {
+  0% { stroke-dashoffset: 30; opacity: 0; transform: translateY(2px); }
+  20% { opacity: 0.85; }
+  70% { opacity: 0.35; }
+  100% { stroke-dashoffset: 0; opacity: 0; transform: translateY(-5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ember,
+  .wisp {
+    animation: none;
+  }
+  .wisp {
+    stroke-dashoffset: 0;
+    opacity: 0.5;
+  }
+}
