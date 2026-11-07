@@ -3,13 +3,26 @@ import { PuzzleBoard } from '../board/PuzzleBoard'
 import { PromotionPicker } from '../board/PromotionPicker'
 import { type Level, levelFile } from '../lib/levels'
 import type { LevelFile, Puzzle } from '../lib/puzzle'
-import { type SolveState, attempt, isPromotion, playReply, playSetup, retry, startPuzzle } from '../lib/solver'
+import {
+  type SolveState,
+  attempt,
+  hintMove,
+  isPromotion,
+  playReply,
+  playSetup,
+  retry,
+  revealStep,
+  showSolution,
+  startPuzzle,
+  takeHint,
+} from '../lib/solver'
 import { loadNumber, saveNumber } from '../lib/storage'
 import './puzzle.css'
 
 /** Pauses so the player can follow what the opponent does. */
 const SETUP_DELAY_MS = 800
 const REPLY_DELAY_MS = 550
+const REVEAL_DELAY_MS = 900
 
 interface Props {
   level: Level
@@ -90,7 +103,12 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
       const t = setTimeout(() => setState(playReply), REPLY_DELAY_MS)
       return () => clearTimeout(t)
     }
-  }, [state.status])
+    // Showing the solution: one move at a time, slowly enough to follow.
+    if (state.status === 'revealing') {
+      const t = setTimeout(() => setState(revealStep), REVEAL_DELAY_MS)
+      return () => clearTimeout(t)
+    }
+  }, [state.status, state.ply])
 
   function submit(uci: string): boolean {
     const result = attempt(state, uci)
@@ -112,12 +130,22 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
   const movesLeft = Math.ceil((puzzle.moves.length - state.ply) / 2)
   const side = state.player === 'white' ? 'White' : 'Black'
 
+  const hint = hintMove(state)
+  const playingText =
+    state.hintLevel === 1
+      ? 'Hint: move the glowing piece.'
+      : state.hintLevel === 2
+        ? 'Hint: follow the arrow.'
+        : `${side} to move — mate in ${movesLeft}`
+
   const message = {
     intro: { text: 'Watch the last move…', tone: '' },
-    playing: { text: `${side} to move — mate in ${movesLeft}`, tone: '' },
+    playing: { text: playingText, tone: state.hintLevel ? 'hint' : '' },
     opponent: { text: 'Good move! Keep going…', tone: 'good' },
-    solved: { text: 'Checkmate! Well played.', tone: 'good' },
+    solved: { text: state.assisted ? 'Checkmate! (with a hint)' : 'Checkmate! Well played.', tone: 'good' },
     failed: { text: "That's not it. Try again?", tone: 'bad' },
+    revealing: { text: "Here's the mate…", tone: 'hint' },
+    revealed: { text: "That's the mate. Now try it yourself!", tone: 'hint' },
   }[state.status]
 
   return (
@@ -140,6 +168,7 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
         fen={state.fen}
         orientation={state.player}
         lastMove={state.lastMove}
+        hint={hint && state.hintLevel > 0 ? { ...hint, showTarget: state.hintLevel === 2 } : null}
         interactive={state.status === 'playing'}
         onMove={onMove}
       />
@@ -149,12 +178,32 @@ function PuzzlePlayer({ level, puzzle, number, total, onSolved, onNext, onBack }
       </p>
 
       <div className="actions">
+        {state.status === 'playing' && (
+          <>
+            <button type="button" onClick={() => setState(takeHint)} disabled={state.hintLevel === 2}>
+              {state.hintLevel === 0 ? 'Hint' : 'Another hint'}
+            </button>
+            <button type="button" onClick={() => setState(showSolution)}>
+              Show solution
+            </button>
+          </>
+        )}
         {state.status === 'failed' && (
-          <button type="button" onClick={() => setState(retry)}>
-            Retry
+          <>
+            <button type="button" onClick={() => setState(retry)}>
+              Retry
+            </button>
+            <button type="button" onClick={() => setState(showSolution)}>
+              Show solution
+            </button>
+          </>
+        )}
+        {state.status === 'revealed' && (
+          <button type="button" onClick={() => setState(startPuzzle(puzzle))}>
+            Try it yourself
           </button>
         )}
-        {(state.status === 'solved' || state.status === 'failed') && (
+        {(state.status === 'solved' || state.status === 'failed' || state.status === 'revealed') && (
           <button type="button" className="primary" onClick={onNext}>
             Next puzzle →
           </button>

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { Puzzle } from './puzzle';
-import { attempt, isPromotion, playReply, playSetup, retry, startPuzzle } from './solver';
+import {
+  attempt,
+  hintMove,
+  isPromotion,
+  playReply,
+  playSetup,
+  retry,
+  revealStep,
+  showSolution,
+  startPuzzle,
+  takeHint,
+} from './solver';
 
 // Scholar's Mate as a mate in 1: Black blunders 3...Nf6, White plays Qxf7#.
 const MATE_IN_1: Puzzle = {
@@ -69,5 +80,46 @@ describe('solver', () => {
     const fen = '8/4P3/8/8/8/8/k7/4K3 w - - 0 1';
     expect(isPromotion(fen, 'e7', 'e8')).toBe(true);
     expect(isPromotion(fen, 'e1', 'e2')).toBe(false);
+  });
+
+  it('gives two levels of hint for the current move, then resets after a move', () => {
+    let s = playSetup(startPuzzle(MATE_IN_2));
+    expect(hintMove(s)).toEqual({ from: 'b6', to: 'b1' });
+    s = takeHint(s);
+    expect(s.hintLevel).toBe(1);
+    expect(s.assisted).toBe(true);
+    s = takeHint(takeHint(s));
+    expect(s.hintLevel).toBe(2); // capped
+    const r = attempt(s, 'b6b1');
+    expect(r.state.hintLevel).toBe(0);
+    expect(r.state.assisted).toBe(true); // still remembered
+    expect(hintMove(r.state)).toBeNull(); // opponent's turn
+    expect(hintMove(playReply(r.state))).toEqual({ from: 'b1', to: 'd1' });
+  });
+
+  it('shows the whole solution from the start of the line', () => {
+    let s = showSolution(playSetup(startPuzzle(MATE_IN_2)));
+    expect(s.status).toBe('revealing');
+    s = revealStep(s);
+    expect(s.lastMove).toEqual({ from: 'b6', to: 'b1' });
+    s = revealStep(revealStep(s));
+    expect(s.status).toBe('revealed');
+    expect(s.lastMove).toEqual({ from: 'b1', to: 'd1' });
+    expect(revealStep(s)).toBe(s);
+  });
+
+  it('after a wrong move, the solution starts from before the mistake', () => {
+    const before = playSetup(startPuzzle(MATE_IN_1));
+    const failed = attempt(before, 'h5e5').state;
+    const s = showSolution(failed);
+    expect(s.fen).toBe(before.fen);
+    const done = revealStep(s);
+    expect(done.status).toBe('revealed');
+    expect(done.lastMove).toEqual({ from: 'h5', to: 'f7' });
+  });
+
+  it('cannot reveal a puzzle that is already solved', () => {
+    const solved = attempt(playSetup(startPuzzle(MATE_IN_1)), 'h5f7').state;
+    expect(showSolution(solved)).toBe(solved);
   });
 });
