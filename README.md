@@ -16,6 +16,16 @@ A puzzle game for chess lovers. Practice seeing finishing moves like a grand mas
 
 Solve each puzzle by dragging or tapping pieces: the opponent's last move plays first, your correct moves get an automatic reply, and on the final move any checkmate counts. Pawn promotions ask which piece you want (some mates need a knight!).
 
+Stuck? **Hint** makes the piece to move glow, a second hint adds an arrow, and **Show solution** plays the mate.
+
+**Progress** is saved in your browser:
+- **Rating:** Elo against each puzzle's Lichess rating. A clean solve (no hint, no wrong move) is a win.
+- **Unlocks:** a level opens after 10 clean solves on the level below, with 7 of the last 10 clean. The stats page can unlock everything for a preview.
+- **Review:** a missed puzzle comes back 5 puzzles later.
+- **Stats page:** rating chart, streaks, days in a row, per-level accuracy, and recent puzzles with links to Lichess.
+
+The rules live in `src/lib/progress.ts`.
+
 Each level ships ~300 puzzles from the [Lichess puzzle database](https://database.lichess.org/#puzzles) (CC0), spread from easiest to hardest by Lichess rating.
 
 ## Develop

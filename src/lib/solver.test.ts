@@ -6,6 +6,7 @@ import {
   isPromotion,
   playReply,
   playSetup,
+  resultOf,
   retry,
   revealStep,
   showSolution,
@@ -121,5 +122,17 @@ describe('solver', () => {
   it('cannot reveal a puzzle that is already solved', () => {
     const solved = attempt(playSetup(startPuzzle(MATE_IN_1)), 'h5f7').state;
     expect(showSolution(solved)).toBe(solved);
+  });
+
+  it('scores a visit: clean, assisted, failed', () => {
+    const start = playSetup(startPuzzle(MATE_IN_1));
+    expect(resultOf(start)).toBeNull();
+    expect(resultOf(attempt(start, 'h5f7').state)).toBe('clean');
+    expect(resultOf(attempt(takeHint(start), 'h5f7').state)).toBe('assisted');
+    const failed = attempt(start, 'h5e5').state;
+    expect(resultOf(failed)).toBeNull(); // can still retry
+    expect(resultOf(failed, true)).toBe('failed'); // walked away
+    expect(resultOf(attempt(retry(failed), 'h5f7').state)).toBe('assisted');
+    expect(resultOf(showSolution(start))).toBe('failed');
   });
 });

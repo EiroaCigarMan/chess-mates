@@ -1,0 +1,229 @@
+.stats-screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.stats-screen h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+/* Summary tiles: 2 across on phones, 4 on wider screens */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 560px) {
+  .tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 2px solid var(--cedar-light);
+}
+
+.tile-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.tile-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.panel {
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 2px solid var(--cedar-light);
+}
+
+/* Rating chart */
+.chart {
+  position: relative;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y; /* a horizontal finger drag scrubs the chart; vertical still scrolls */
+  outline-offset: 4px;
+}
+
+.chart .grid {
+  stroke: var(--muted);
+  stroke-opacity: 0.18;
+  stroke-width: 1;
+}
+
+.chart .axis {
+  fill: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart .line {
+  fill: none;
+  stroke: var(--cedar-dark);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .crosshair {
+  stroke: var(--muted);
+  stroke-opacity: 0.6;
+  stroke-width: 1;
+}
+
+.chart .marker {
+  fill: var(--cedar-dark);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.chart .tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chart .tooltip strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Levels table */
+.level-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.level-table th,
+.level-table td {
+  padding: 7px 4px;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
+}
+
+.level-table thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.level-table td:nth-child(2),
+.level-table td:nth-child(3),
+.level-table thead th:nth-child(2),
+.level-table thead th:nth-child(3) {
+  text-align: right;
+  padding-right: 12px;
+}
+
+.level-table tbody th {
+  font-weight: 600;
+}
+
+/* Recent puzzles */
+.recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recent-row {
+  display: grid;
+  grid-template-columns: 7.5em 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 7px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
+}
+
+.recent-row:last-child {
+  border-bottom: none;
+}
+
+.recent-row .result {
+  font-weight: 600;
+}
+
+.recent-row.clean .result {
+  color: #2f7a4f;
+}
+
+.recent-row.assisted .result {
+  color: #a8601c;
+}
+
+.recent-row.failed .result {
+  color: #b23a2a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .recent-row.clean .result { color: #7fd3a0; }
+  .recent-row.assisted .result { color: #f0b46a; }
+  .recent-row.failed .result { color: #ff8f7f; }
+}
+
+.recent-row a {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 420px) {
+  .recent-row {
+    grid-template-columns: 1fr auto;
+  }
+  .recent-row .muted {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 0.8rem;
+  }
+}
